@@ -4,7 +4,9 @@ package com.liuyang.xdr.server.receiver;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.liuyang.xdr.parser.XDRParser100;
 import com.liuyang.xdr.protocol.Channel;
@@ -25,15 +27,6 @@ public class XDRReceiveServer extends BaseServer {
 						RECEIVER_MAP.put(tableid, new XDRReceiveServer(i, tableid));
 					}
 				}
-				if (!RECEIVER_MAP.containsKey(tableid)) {
-					RECEIVER_MAP.put(tableid, new XDRReceiveServer(i, tableid));
-					try {
-						RECEIVER_MAP.get(tableid).start();
-						return RECEIVER_MAP.get(tableid);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
 			}
 		}
 		if (RECEIVER_MAP.containsKey(tableid)) {
@@ -52,6 +45,16 @@ public class XDRReceiveServer extends BaseServer {
 		if (RECEIVER_MAP.containsKey(receiver.tableId)) {
 			RECEIVER_MAP.remove(receiver.tableId).stop();
 		}
+	}
+	
+	public synchronized final static void destroyAllReceiver() {
+		Iterator<Entry<String, XDRReceiveServer>> itor = RECEIVER_MAP.entrySet().iterator();
+		while(itor.hasNext()) {
+			Entry<String, XDRReceiveServer> element = itor.next();
+			element.getValue().stop();
+			itor.remove();
+		}
+		itor = null;
 	}
 	
 	private XDRParser100 parser = new XDRParser100();

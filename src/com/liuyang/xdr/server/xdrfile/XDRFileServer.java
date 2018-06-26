@@ -3,6 +3,7 @@ package com.liuyang.xdr.server.xdrfile;
 import java.io.IOException;
 
 import com.liuyang.xdr.protocol.server.BaseServer;
+import com.liuyang.xdr.server.receiver.XDRReceiveServer;
 
 
 public class XDRFileServer extends BaseServer {
@@ -31,5 +32,12 @@ public class XDRFileServer extends BaseServer {
 			}
 			return null;
 		});
+	}
+	
+	@Override
+	public void stop() {
+		super.stop();
+		// 主服务线程关闭后，需要关闭附属线程（即由服务会话开启的从属线程）
+		XDRReceiveServer.destroyAllReceiver();
 	}
 }
