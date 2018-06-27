@@ -3,9 +3,7 @@ package com.liuyang.xdr.server.xdrfile;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.liuyang.data.util.Row;
 import com.liuyang.xdr.protocol.server.Request;
@@ -208,10 +206,17 @@ public class XDRFileSession extends Session {
 					 request.getString("TABLEID")
 					,request.getString("DELIMITER")
 				);
-				response.setHeader("MESSAGE", "200 Receiver open succful.");
+				
 			}
-			response.setHeader("HOST", receiver.getHost());
-			response.setHeader("PORT", receiver.getPort());
+			if (receiver != null) {
+				response.setHeader("HOST", receiver.getHost());
+				response.setHeader("PORT", receiver.getPort());
+				response.setHeader("MESSAGE", "200 Receiver open succful.");
+			} else {
+				response.setHeader("STATUS", "failure");
+				response.setHeader("MESSAGE", "200 Receiver open failure.");
+			}
+
 		} else {
 			response.setHeader("MESSAGE", "500 please login at frist.");
 		}

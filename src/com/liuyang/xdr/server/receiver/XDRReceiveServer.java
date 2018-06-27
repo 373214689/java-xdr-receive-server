@@ -21,23 +21,31 @@ public class XDRReceiveServer extends BaseServer {
 	public final static XDRReceiveServer createReceiver(String tableid, String delimiter) {
 		int min = RECEIVER_START_PORT, max = RECEIVER_START_PORT + RECEIVER_PORT_RANGE;
 		if (!RECEIVER_MAP.containsKey(tableid)) {
-			for(int i = min; i < max; i++) {
-				for(XDRReceiveServer svr : RECEIVER_MAP.values()) {
-					if (svr.getPort() != i) {
-						RECEIVER_MAP.put(tableid, new XDRReceiveServer(i, tableid));
+			if (RECEIVER_MAP.size() == 0) {
+				RECEIVER_MAP.put(tableid, new XDRReceiveServer(min, tableid));
+				try {
+					RECEIVER_MAP.get(tableid).start();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				for(int i = min; i < max; i++) {
+					for(XDRReceiveServer svr : RECEIVER_MAP.values()) {
+						if (svr.getPort() != i) {
+							RECEIVER_MAP.put(tableid, new XDRReceiveServer(i, tableid));
+							try {
+								RECEIVER_MAP.get(tableid).start();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 			}
+
 		}
-		if (RECEIVER_MAP.containsKey(tableid)) {
-			try {
-				RECEIVER_MAP.get(tableid).start();
-				return RECEIVER_MAP.get(tableid);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
+		return RECEIVER_MAP.get(tableid);
 	}
 	
 	public synchronized final static void destroyReceiver(XDRReceiveServer receiver) {

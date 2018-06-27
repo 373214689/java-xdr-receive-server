@@ -11,6 +11,7 @@ import com.liuyang.ftp.FtpClient;
 import com.liuyang.ftp.FtpClient.Mode;
 import com.liuyang.ftp.FtpClientException;
 import com.liuyang.thread.FixedThreadPool;
+import com.liuyang.thread.SimpleThreadPool;
 import com.liuyang.xdr.client.FtpFileListClient;
 import com.liuyang.xdr.protocol.Channel;
 import com.liuyang.xdr.server.receiver.XDRReceiveServer;
@@ -38,7 +39,7 @@ public class FtpFileListTest {
 	static FtpFileListClient client;
 	static FtpClient ftpClient;
 	static Map<String, String> fileInfo;
-	static FixedThreadPool<Integer> thradpool;
+	static SimpleThreadPool<Integer> threadpool;
 	static Channel sender;
 	
 	public static void main(String[] args) throws IOException {
@@ -76,27 +77,26 @@ public class FtpFileListTest {
 			
 			client.logout();
 			client.close();
-			server.stop();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			server = null;
 		}
 	}
 	
 	public static void test1() {
 
+		threadpool = new SimpleThreadPool<Integer>(2);
 		for (int i = 0; i <= 10; i++) {
 			//new Handler(sender, client.getOneXDRFile("17706", "100", "8", "0"));
-			//thradpool.submit(new Handler(sender, client,  "17706", "100", "8", "0"));
-			new Handler(sender, client,  "17707", "100", "8", "0").start();
+			threadpool.submit(new Handler(sender, client,  "17708", "100", "8", "0"));
+			//new Handler(sender, client,  "17708", "100", "8", "0").start();
 		}
+		threadpool.start();
 		
 	}
 	
-	private static class Handler extends Thread {
+	private static class Handler implements Callable<Integer> {
 
 		private Channel sender;
 		private FtpFileListClient receiver;
@@ -125,11 +125,10 @@ public class FtpFileListTest {
 			status = null;
 		}
 		
-		@Override
-		public void run() {
+		public Integer call() {
 			Map<String, String> fileInfo = receiver.getOneXDRFile(date, table, hour, status);
-			if (fileInfo == null) return;
-			if (fileInfo.size() == 0) return;
+			if (fileInfo == null) return 0;
+			if (fileInfo.size() == 0) return 0;
 			FtpClient ftpClient;
 			try {
 				LongValue length = new LongValue();
@@ -177,6 +176,7 @@ public class FtpFileListTest {
 				System.out.println("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
 
 			}
+			return 0;
 		}
 		
 	}

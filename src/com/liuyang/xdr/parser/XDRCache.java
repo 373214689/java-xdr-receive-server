@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import com.liuyang.data.util.Row;
+import com.liuyang.thread.SimpleThreadPool;
 import com.liuyang.xdr.udf.UDF;
 
 public class XDRCache {
@@ -47,6 +49,8 @@ public class XDRCache {
 		}
 	}
 	
+	private static SimpleThreadPool<Integer> threadpool = new SimpleThreadPool<Integer>(10);
+	
 	private static class Buffer {
 		LinkedList<String> buffer;
 		
@@ -60,6 +64,7 @@ public class XDRCache {
 		int count = 0;
 		
 		private long length = 0;
+		private long counter = 0;
 		
 		public Buffer(Row partitions) {
 			this.partitions = partitions;
@@ -84,25 +89,61 @@ public class XDRCache {
 			synchronized(buffer) {
 				buffer.addLast(e);
 				length += e.getBytes().length;
+				counter++;
 				if (length >= BUFFER_LIMIT_SIZE) {
 					flush();
 				}
 			}
 		}
+
+		private synchronized void flush() {
+			count++;
+			File target = new File(
+					bufferPath
+				   ,String.format("%s_%04d_%06d.%s", templementFileName, count, System.nanoTime() % 65536, "txt"));
+			threadpool.submit(new Handler(counter, target));
+			threadpool.start();
+			length = 0;
+			counter = 0;
+			target = null;
+		}
 		
-		private boolean write(File target) {
-			synchronized(buffer) {
+		private class Handler implements Callable<Integer> {
+			long lines;
+			File target;
+		
+			public Handler (long lines, File target) {
+				this.lines = lines;
+				this.target = target;
+			}
+			
+			protected void finalize() {
+				lines = 0;
+				target = null;
+			}
+			
+			private String pop() {
+				synchronized(buffer) {
+					String retval = null;
+					if (!buffer.isEmpty() && lines > 0) {
+						retval = buffer.removeFirst();
+						lines--;
+					}
+					return retval;
+				}
+			}
+			
+			private boolean write(File target) {
+				
 				boolean retval = false;
 				FileWriter writer = null;
 				try {
 					target.getParentFile().mkdirs();
-					writer = new FileWriter(target);
-					while(!buffer.isEmpty()) {
-						String line = buffer.removeFirst();
-						if (line != null) {
-							writer.write(line);
-							writer.write("\n");
-						}
+					writer = new FileWriter(target, true);
+					String line = null;
+					while((line = pop()) != null) {
+						writer.write(line);
+						writer.write("\n");
 					}
 					writer.close();
 					retval = true;
@@ -113,24 +154,21 @@ public class XDRCache {
 				}
 				return retval;
 			}
-		}
-			
-		private synchronized void flush() {
-			File target = new File(
-					bufferPath
-				   ,String.format("%s_%04d_%06d.%s", templementFileName, count, System.nanoTime() % 65536, "txt"));
-			if (write(target) && target.exists()) {
-				length = 0;
-				System.out.println(target + " write. length = " + target.length());
-				System.gc(); // 释放内存
-				System.out.println(String.format(
-						 "System: usedMemery >> %.2fMB, freeMemery >> %.2fMB, totalMemery >> %.2fMB"
-						,((double) (UDF.getUsedMemery())) / 1024 / 1024
-						,((double) (UDF.getFreeMemery())) / 1024 / 1024
-						,((double) (UDF.getTotalMemery())) / 1024 / 1024
-					));
+
+			public Integer call() {
+				if (write(target) && target.exists()) {
+					System.out.println(target + " write. length = " + target.length());
+					System.gc(); // 释放内存
+					System.out.println(String.format(
+							 "System: memery(%.2f%%), usedMemery >> %.2fMB, freeMemery >> %.2fMB, totalMemery >> %.2fMB"
+							,((double) UDF.getUsedMemery()) / ((double) UDF.getTotalMemery()) * 100
+							,((double) (UDF.getUsedMemery())) / 1024 / 1024
+							,((double) (UDF.getFreeMemery())) / 1024 / 1024
+							,((double) (UDF.getTotalMemery())) / 1024 / 1024
+						));
+				}
+				return 0;
 			}
-			target = null;
 		}
 
 	}
