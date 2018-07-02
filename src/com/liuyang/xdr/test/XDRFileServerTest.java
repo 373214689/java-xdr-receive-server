@@ -1,25 +1,21 @@
 package com.liuyang.xdr.test;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
-import com.liuyang.data.util.LongValue;
+import java.io.IOException;
+import java.util.Map;
+
 import com.liuyang.ftp.FtpClient;
-import com.liuyang.ftp.FtpClient.Mode;
-import com.liuyang.ftp.FtpClientException;
+import com.liuyang.log.Logger;
 import com.liuyang.thread.FixedThreadPool;
 import com.liuyang.xdr.client.FtpFileListClient;
 import com.liuyang.xdr.protocol.Channel;
 import com.liuyang.xdr.server.receiver.XDRReceiveServer;
 import com.liuyang.xdr.server.xdrfile.XDRFileServer;
-import com.liuyang.xdr.udf.Meta;
 import com.liuyang.xdr.udf.UDF;
 
 public class XDRFileServerTest {
-
+	private final static Logger logger = Logger.getLogger(XDRFileServerTest.class);
+	
 	public static long length = 0;
 	
 	public static long getFreeMemery() {
@@ -54,7 +50,7 @@ public class XDRFileServerTest {
 		
 		//thradpool = new FixedThreadPool<Integer>(2);
 		
-		System.out.println(String.format(
+		logger.debug(String.format(
 				 "System: usedMemery >> %.2fMB, freeMemery >> %.2fMB, totalMemery >> %.2fMB"
 				,((double) (UDF.getUsedMemery())) / 1024 / 1024
 				,((double) (UDF.getFreeMemery())) / 1024 / 1024

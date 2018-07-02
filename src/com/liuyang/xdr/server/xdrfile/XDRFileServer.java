@@ -2,12 +2,15 @@ package com.liuyang.xdr.server.xdrfile;
 
 import java.io.IOException;
 
+import com.liuyang.log.Logger;
 import com.liuyang.xdr.protocol.server.BaseServer;
+import com.liuyang.xdr.protocol.server.Session;
 import com.liuyang.xdr.server.receiver.XDRReceiveServer;
 
 
 public class XDRFileServer extends BaseServer {
-
+	//private final static Logger logger = Logger.getLogger(XDRFileServer.class);
+	
 	public XDRFileServer(String host, int port) {
 		super(host, port);
 		setName("xdr file server");

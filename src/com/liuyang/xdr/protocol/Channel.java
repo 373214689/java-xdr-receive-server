@@ -6,12 +6,17 @@ import java.net.SocketException;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import com.liuyang.log.Logger;
+import com.liuyang.xdr.parser.BaseParser;
+
 /**
  * 通道
  * @author liuyang
  *
  */
 public class Channel {
+	private final static Logger logger = Logger.getLogger(Channel.class);
+	
 	public static enum Mode {
 		UPLINK,
 		DOWNLINK
@@ -241,21 +246,22 @@ public class Channel {
 	private final class Handler extends Thread {
 		@Override
 		public synchronized void run() {
-			System.out.println("channel [" + name + "] listen handler start");
+			setName(name);
+			logger.debug("channel [" + name + "] listen handler start");
 			// 如未处理运行状态，则会退出监听线程
 			while(isRunning()) {
 				// 如果未启动监听，则不执行action
 				if (enableListen) action.accept(self);
 				if (!isRunning()) {
-					System.out.println("channel [" + name + "] listen breaken. isRunning=" + isRunning);
+					logger.debug("channel [" + name + "] listen breaken. isRunning=" + isRunning);
 					break;
 				}
 				if (isClosed()) {
-					System.out.println("channel [" + name + "] listen breaken. isClosed=" + isClosed());
+					logger.debug("channel [" + name + "] listen breaken. isClosed=" + isClosed());
 					break;
 				}
 			}
-			System.out.println("channel [" + name + "] listen handler stop");
+			logger.debug("channel [" + name + "] listen handler stop");
 		}
 	}
 }

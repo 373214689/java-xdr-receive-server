@@ -1,7 +1,5 @@
 package com.liuyang.xdr.client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -9,10 +7,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.liuyang.log.Logger;
 import com.liuyang.xdr.protocol.Channel;
 import com.liuyang.xdr.util.Node;
 
 public class FtpFileListClient extends BaseClient {
+	private final static Logger logger = Logger.getLogger(FtpFileListClient.class);
 
 	String cookie;
 	Channel channel;
@@ -24,8 +24,8 @@ public class FtpFileListClient extends BaseClient {
 		Map<String, String> response = getResponse();
 		cookie = response.get("COOKIE");
 		
-		//System.out.println(response);
-		//System.out.println(cookie);
+		//logger.debug(response);
+		//logger.debug(cookie);
 		
 	}
 	
@@ -33,7 +33,7 @@ public class FtpFileListClient extends BaseClient {
 		if (line == null) return null;
 		if (line.equals("\r\n") || line.equals("\n")) return null;
 		Node<String, String> retval = new Node<String, String>();
-		//System.out.println(line);
+		//logger.debug(line);
 		line = line.replace("\r", "").replace("\n", "");
 		int split = line.indexOf(": ");
 		retval.key = line.substring(0, split).trim().toUpperCase();
@@ -47,7 +47,7 @@ public class FtpFileListClient extends BaseClient {
 		while ((node = parse(channel.readUTF())) != null) {
 			response.put(node.key, node.value);
 		}
-		System.out.println("client.getresponse: " + response);
+		logger.debug("client.getresponse: " + response);
 		if (!response.containsKey("METHOD"))
 			throw new IllegalArgumentException("Illegal request, has not a value of METHOD.");
 		if (!response.containsKey("COOKIE"))
@@ -66,7 +66,7 @@ public class FtpFileListClient extends BaseClient {
 	}
 	
 	public synchronized void sendRequest(Map<String, String> request) {
-		System.out.println("client.setRequest: " + request);
+		logger.debug("client.setRequest: " + request);
 		for (String key : request.keySet()) {
 			channel.writeUTF(key + ": " + request.get(key) + "\r\n");
 		}

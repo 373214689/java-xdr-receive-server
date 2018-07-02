@@ -1,6 +1,7 @@
 package com.liuyang.xdr.test;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -10,6 +11,7 @@ import com.liuyang.data.util.LongValue;
 import com.liuyang.ftp.FtpClient;
 import com.liuyang.ftp.FtpClient.Mode;
 import com.liuyang.ftp.FtpClientException;
+import com.liuyang.log.Logger;
 import com.liuyang.thread.FixedThreadPool;
 import com.liuyang.thread.SimpleThreadPool;
 import com.liuyang.xdr.client.FtpFileListClient;
@@ -19,7 +21,8 @@ import com.liuyang.xdr.server.xdrfile.XDRFileServer;
 import com.liuyang.xdr.udf.Meta;
 
 public class FtpFileListTest {
-
+	private final static Logger logger = Logger.getLogger(FtpFileListTest.class);
+	
 	public static long length = 0;
 	
 	public static long getFreeMemery() {
@@ -45,7 +48,9 @@ public class FtpFileListTest {
 	public static void main(String[] args) throws IOException {
 		//server = new XDRFileServer(38002);
 		//server.start();
-		
+		//logger.debug(System.currentTimeMillis());
+		//logger.debug(new File("d:\\LTE_GZ_YDGZG00475_103000256042_20180618210002.txt").lastModified());
+		//System.exit(0);
 		client = new FtpFileListClient("192.168.9.1", 38002);
 		client.login("liuyang", "lcservis");
 		
@@ -54,8 +59,8 @@ public class FtpFileListTest {
 		
 		//thradpool = new FixedThreadPool<Integer>(2);
 		
-		System.out.println("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
-		System.out.println("5 freeMemery >> " + ((double) (getFreeMemery())) / 1024 / 1024);
+		logger.debug("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+		logger.debug("5 freeMemery >> " + ((double) (getFreeMemery())) / 1024 / 1024);
 		
 		test1();
 	}
@@ -64,7 +69,7 @@ public class FtpFileListTest {
 	public void test2() {
 		
 		try {
-			//System.out.println(Meta.getOneXDRFile("17700", "100", "21", "0"));
+			//logger.debug(Meta.getOneXDRFile("17700", "100", "21", "0"));
 			//server = new XDRFileServer(38002);
 			//server.start();
 			
@@ -81,15 +86,16 @@ public class FtpFileListTest {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
+			
 		}
 	}
 	
 	public static void test1() {
 
-		threadpool = new SimpleThreadPool<Integer>(2);
+		threadpool = new SimpleThreadPool<Integer>(5);
 		for (int i = 0; i <= 10; i++) {
 			//new Handler(sender, client.getOneXDRFile("17706", "100", "8", "0"));
-			threadpool.submit(new Handler(sender, client,  "17708", "100", "8", "0"));
+			threadpool.submit(new Handler(sender, client,  "17714", "100", "8", "0"));
 			//new Handler(sender, client,  "17708", "100", "8", "0").start();
 		}
 		threadpool.start();
@@ -136,10 +142,10 @@ public class FtpFileListTest {
 				if ("succful".equals(fileInfo.get("STATUS"))) {
 					if (ftpClient.connect(fileInfo.get("HOST"), Integer.valueOf(fileInfo.get("PORT")), fileInfo.get("USER"), fileInfo.get("PASS"))) {
 						//ftpClient.copyRemoteFileToLocal(fileInfo.get("FILEPATH"), "d:/" + fileInfo.get("FILENAME"), Mode.OVERWRITE);
-						//System.out.println(ftpClient.lines(fileInfo.get("FILEPATH")).count());
+						//logger.debug(ftpClient.lines(fileInfo.get("FILEPATH")).count());
 						System.gc();
 						long u1 = getUsedMemery();
-						System.out.println("1 usedMemery >> " + ((double) (u1)) / 1024 / 1024);
+						logger.debug("1 usedMemery >> " + ((double) (u1)) / 1024 / 1024);
 						double s = System.nanoTime();
 						ftpClient.lines(fileInfo.get("FILEPATH")).forEach(t -> {
 							final int strLen = t.getBytes().length;
@@ -150,12 +156,12 @@ public class FtpFileListTest {
 						});
 						double u = (System.nanoTime() - s) / 1000000;
 						double l = ((double) (length.getLong()))/ 1024 / 1024;
-						System.out.println(String.format("Speed: %.3fMB/s", l / u * 1000));
-						//System.out.println("1 bufferSize >> " + XDRReceiveServer.BUFFER.size());
+						logger.debug(String.format("Speed: %.3fMB/s", l / u * 1000));
+						//logger.debug("1 bufferSize >> " + XDRReceiveServer.BUFFER.size());
 						
-						System.out.println("2 fileLength >> " + l);
+						logger.debug("2 fileLength >> " + l);
 						//System.gc();
-						System.out.println("3 incrementMemery >> " + ((double) (getUsedMemery() - u1)) / 1024 / 1024);
+						logger.debug("3 incrementMemery >> " + ((double) (getUsedMemery() - u1)) / 1024 / 1024);
 						//XDRReceiveServer.BUFFER.clear();
 
 						ftpClient.closeStream();
@@ -168,12 +174,12 @@ public class FtpFileListTest {
 				e.printStackTrace();
 			} finally {
 				//
-				//System.out.println("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
-				//System.out.println("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+				//logger.debug("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+				//logger.debug("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
 				ftpClient = null;
 				System.gc();
-				System.out.println("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
-				System.out.println("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+				logger.debug("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+				logger.debug("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
 
 			}
 			return 0;
@@ -192,10 +198,10 @@ public class FtpFileListTest {
                 sender.setName("client - send data");
 				if (ftpClient.connect(fileInfo.get("HOST"), Integer.valueOf(fileInfo.get("PORT")), fileInfo.get("USER"), fileInfo.get("PASS"))) {
 					//ftpClient.copyRemoteFileToLocal(fileInfo.get("FILEPATH"), "d:/" + fileInfo.get("FILENAME"), Mode.OVERWRITE);
-					//System.out.println(ftpClient.lines(fileInfo.get("FILEPATH")).count());
+					//logger.debug(ftpClient.lines(fileInfo.get("FILEPATH")).count());
 					System.gc();
 					long u1 = getUsedMemery();
-					System.out.println("1 usedMemery >> " + ((double) (u1)) / 1024 / 1024);
+					logger.debug("1 usedMemery >> " + ((double) (u1)) / 1024 / 1024);
 					double s = System.nanoTime();
 					ftpClient.lines(fileInfo.get("FILEPATH")).forEach(t -> {
 						final int strLen = t.getBytes().length;
@@ -206,12 +212,12 @@ public class FtpFileListTest {
 					});
 					double u = (System.nanoTime() - s) / 1000000;
 					double l = ((double) (length.getLong()))/ 1024 / 1024;
-					System.out.println(String.format("Speed: %.3fMB/s", l / u * 1000));
-					//System.out.println("1 bufferSize >> " + XDRReceiveServer.BUFFER.size());
+					logger.debug(String.format("Speed: %.3fMB/s", l / u * 1000));
+					//logger.debug("1 bufferSize >> " + XDRReceiveServer.BUFFER.size());
 					
-					System.out.println("2 fileLength >> " + l);
+					logger.debug("2 fileLength >> " + l);
 					System.gc();
-					System.out.println("3 incrementMemery >> " + ((double) (getUsedMemery() - u1)) / 1024 / 1024);
+					logger.debug("3 incrementMemery >> " + ((double) (getUsedMemery() - u1)) / 1024 / 1024);
 					//XDRReceiveServer.BUFFER.clear();
 
 					ftpClient.closeStream();
@@ -224,8 +230,8 @@ public class FtpFileListTest {
 			e.printStackTrace();
 		} finally {
 			System.gc();
-			System.out.println("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
-			System.out.println("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+			logger.debug("4 usedMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
+			logger.debug("5 freeMemery >> " + ((double) (getUsedMemery())) / 1024 / 1024);
 			ftpClient = null;
 
 

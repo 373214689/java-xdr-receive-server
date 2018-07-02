@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.List;
 
 import com.liuyang.data.util.Row;
+import com.liuyang.log.Logger;
+import com.liuyang.xdr.protocol.server.BaseServer;
 import com.liuyang.xdr.protocol.server.Request;
 import com.liuyang.xdr.protocol.server.Response;
 import com.liuyang.xdr.protocol.server.Session;
@@ -14,7 +16,7 @@ import com.liuyang.xdr.udf.Meta;
 import com.liuyang.xdr.util.Node;
 
 public class XDRFileSession extends Session {
-
+	private final static Logger logger = Logger.getLogger(XDRFileSession.class);
 	
 	
 	//public static List<XDRFileSession> container = new ArrayList<XDRFileSession>();
@@ -54,7 +56,7 @@ public class XDRFileSession extends Session {
 		while ((node = parse(session.readUTF())) != null) {
 			request.setAttribute(node.key, node.value);
 		}
-		System.out.println("XDRFileSession.getRequest: " + request);
+		logger.debug("session [" + session.getName() + "] getRequest: " + request);
 		//if (!request.containsKey("METHOD"))
 		//	throw new IllegalArgumentException("Illegal request, has not a value of METHOD.");
 		//if (!request.containsKey("COOKIE"))
@@ -64,6 +66,7 @@ public class XDRFileSession extends Session {
 	
 	private synchronized final static void sendResponse(Response response) {
 		Session session = response.getSession();
+		logger.debug("session [" + session.getName() + "] sendResponse: " + response);
 		for(Object key : response.keys()) {
 			session.writeUTF(key + ": " + response.get(key) + "\r\n");
 		}
@@ -79,7 +82,7 @@ public class XDRFileSession extends Session {
 		super(client, enableListen, XDRFileSession::getRequest, XDRFileSession::sendResponse);
 		
 		contectionStartTime = System.currentTimeMillis();
-		setName("Session - " + contectionStartTime);
+		setName("xdr file session - " + contectionStartTime);
 
 	}
 	
@@ -175,7 +178,7 @@ public class XDRFileSession extends Session {
 					,request.getString("HOURS")
 					,request.getString("STATUS")
 			);
-			if (fileInfo != null) {
+			if (retval = (fileInfo != null)) {
 				response.setHeader("PROTOCOL", "ftp");
 				response.setHeader("FILENAME", fileInfo.getString("file_name"));
 				response.setHeader("FILEPATH", fileInfo.getString("file_path"));
@@ -185,13 +188,41 @@ public class XDRFileSession extends Session {
 				response.setHeader("PASS", fileInfo.getString("ftp_pass_word"));
 				response.setHeader("MESSAGE", "200 " + fileInfo.getString("file_path") + " has been get");
 			} else {
-				response.setHeader("STATUS", "failure");
 				response.setHeader("MESSAGE", "500 there is no xdr file to load.");
 			}
 		} else {
 			response.setHeader("MESSAGE", "500 please login at frist.");
 		}
 		return retval;
+	}
+	
+	public synchronized final boolean updatexdr(Request request, Response response) {
+		String[] names = {"FILENAME", "STATUS", "FILELENGTH", "STARTTIME", "ENDTIME"};
+    	boolean retval = checkRequest("selectxdr", request, response, names);
+    	if (retval == false) return retval;
+    	if (retval = (isAuthentication && username != null)) {
+			Row fileInfo = Meta.getOneXDRFile(
+					 request.getString("DATESTAMP")
+					,request.getString("TABLEID")
+					,request.getString("HOURS")
+					,request.getString("STATUS")
+			);
+			if (retval = (fileInfo != null)) {
+				response.setHeader("PROTOCOL", "ftp");
+				response.setHeader("FILENAME", fileInfo.getString("file_name"));
+				response.setHeader("FILEPATH", fileInfo.getString("file_path"));
+				response.setHeader("HOST", fileInfo.getString("ftp_server_host"));
+				response.setHeader("PORT", fileInfo.getInteger("ftp_server_port"));
+				response.setHeader("USER", fileInfo.getString("ftp_user_name"));
+				response.setHeader("PASS", fileInfo.getString("ftp_pass_word"));
+				response.setHeader("MESSAGE", "200 " + fileInfo.getString("file_path") + " has been get");
+			} else {
+				response.setHeader("MESSAGE", "500 there is no xdr file to load.");
+			}
+		} else {
+			response.setHeader("MESSAGE", "500 please login at frist.");
+		}
+    	return retval;
 	}
 	
     public synchronized final boolean openReceiver(Request request, Response response) {

@@ -1,7 +1,6 @@
 package com.liuyang.xdr.util;
 
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 /**
  * 单向链表
@@ -14,54 +13,98 @@ import java.util.function.Consumer;
 public class LinkedList<T> {
     private Node<T> first;
     private Node<T> last;
-    private int count;
+    private int size;
     
     public LinkedList() {
-    	count = 0;
+    	size = 0;
     }
     
     protected void finalize() {
     	first = null;
     	last = null;
-    	count = 0;
+    	size = 0;
     }
     
-    public synchronized void clear() {
+    public synchronized final void clear() {
     	while(first != null) {
     		first = first.next;
-    		count--;
+    		size--;
     	}
     	//System.gc(); // 释放内存
     }
     
-    public synchronized void push(T value) {
+    public synchronized final void push(T value) {
     	if (first == null) {
     		last = first = new Node<T>(value);
     	} else {
     		last = last.next = new Node<T>(value);
     	}
-    	count++;
+    	size++;
     }
 	
-    public synchronized T pop() {
+    public synchronized final T pop() {
     	Node<T> retval = null;
     	if (first != null) {
     		retval = first;
     		first = first.next;
-    		count--;
+    		size--;
     	} 
     	return retval == null ? null : retval.value;
     }
     
-    public synchronized int size() {
-    	return count;
+    public synchronized final int size() {
+    	return size;
     }
     
-    public synchronized boolean isEmpty() {
-    	return count == 0;
+    public synchronized final boolean isEmpty() {
+    	return size == 0;
     }
     
-    public synchronized Iterator<T> iterator() {
+    /**
+     * 删除元素，如果匹配到则删除第一个元素。
+     * 
+     * @param element 待删除的元素。
+     * @return 删除成功则返回被删除的元素，失败则返回null。
+     */
+    public synchronized final T remove(T element) {
+    	if (first == null) return null;
+    	Node<T> next = first;
+    	Node<T> dest = null;
+    	while((next != null)) {
+    		if (next.value.equals(element)) {
+    			// 如果dest == null，则表示next == first
+    			// 在dest不为null的情况下（通常是第二个节点起始），则可以使dest.next指向next.next，从而删除next。
+    			if (dest ==  null) {
+    				first = next.next;
+    			} else {
+    				dest.next = next.next;
+    			}
+    			size--;
+    			break;
+    		}
+    		dest = next;
+    		next = next.next;
+    	}
+    	return next.value;
+    }
+    
+    public synchronized final int indexOf(T value) {
+    	if (first == null) return -1;
+    	Node<T> next = first;
+    	int index = 0;
+    	while((next != null)) {
+    		if (next.value.equals(value)) break;
+    		next = next.next;
+    		index++;
+    	}
+    	return next == null ? -1 : index;
+    }
+    
+    public synchronized final boolean contains(T value) {
+    	return indexOf(value) != -1;
+    }
+    
+    public synchronized final Iterator<T> iterator() {
 		return new Itr();
     }
 
@@ -93,7 +136,7 @@ public class LinkedList<T> {
 	    	if (first != null) {
 	    		cursor = first;
 	    		first = first.next;
-	    		count--;
+	    	    size--;
 	    	} 
 			return cursor.value;
 		}

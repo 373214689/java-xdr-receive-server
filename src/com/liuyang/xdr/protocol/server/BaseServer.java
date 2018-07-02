@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.liuyang.log.Logger;
 import com.liuyang.xdr.protocol.Channel;
 
 public class BaseServer {
+	private final static Logger logger = Logger.getLogger(BaseServer.class);
 	private final static long IDEL_WAIT_TIME = 1000L;
 	
 	private List<Channel> container = new ArrayList<Channel>();
@@ -88,6 +90,7 @@ public class BaseServer {
     	name = String.format("%s [%s:%d] - %d", name, host, port, System.currentTimeMillis());
     	isRunning = server.isBound(); // 如果绑定端口成功则表示server已在运行
     	handler = new Handler();
+    	handler.setName(name);
     	handler.start();
     	
     }
@@ -113,9 +116,9 @@ public class BaseServer {
     		handler.join();
     		//XDRFileSession.stopAll();
     		container.forEach(Channel::close);
-    		System.out.println("server [" + name + "] All sessions of the server has been closed.");
+    		logger.debug("server [" + name + "] All sessions of the server has been closed.");
 			server.close();
-			System.out.println("server [" + name + "] has been closed.");
+			logger.debug("server [" + name + "] has been closed.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -138,11 +141,12 @@ public class BaseServer {
 	private class Handler extends Thread {
 		@Override
 		public void run() {
-			System.out.println("server [" + name + "] listen handler start.");
+			logger.debug("server [" + name + "] listen handler start.");
 			while (isRunning) {
 				if (action != null) {
 					Channel retval = (Channel) action.apply(self);
 					if (retval != null) container.add(retval);
+					retval = null;
 				} else {
 					// 如果不设置处理动作，则线程进行等待
 					try {
@@ -154,7 +158,7 @@ public class BaseServer {
 				if (isRunning == false) break;
 				if (server.isClosed()) break;
 			}
-			System.out.println("server [" + name + "] listen handler end.");
+			logger.debug("server [" + name + "] listen handler end.");
 		}
 	}
 }

@@ -7,9 +7,13 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.liuyang.log.Logger;
 import com.liuyang.xdr.protocol.Channel;
+import com.liuyang.xdr.server.xdrfile.XDRFileSession;
 
 public class Session extends Channel{
+	private final static Logger logger = Logger.getLogger(Session.class);
+	
 	protected Class<?> clazz = this.getClass();
 	protected Class<?> types[] = {Request.class, Response.class};
 	
@@ -151,16 +155,16 @@ public class Session extends Channel{
 						 * 对象表示的基础方法。个别参数被自动解包，以便与基本形参相匹配，基本参数和引用参数都随需服从方法调用转换。
 						 */
 					} catch (Exception ex) {
-						System.err.println("----调用方法[" + name +"]失败----");
+						logger.error("----调用方法[" + name +"]失败----");
 						ex.printStackTrace();
 						responseBadRequest(request);
 					}
 				}
 			}else{
-				System.err.println("----未指定mehtod参数----");
+				logger.error("----未指定mehtod参数----");
 			}
 		} catch (NoSuchMethodException e) {
-			System.err.println("----未找到名为[" + name + "]的方法----");
+			logger.error("----未找到名为[" + name + "]的方法----");
 			e.printStackTrace();
 			responseNoSuchMethod(request);
 		}

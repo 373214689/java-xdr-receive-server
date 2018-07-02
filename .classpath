@@ -5,5 +5,8 @@
 	<classpathentry kind="lib" path="D:/usr/workspace/lib/mysql/jdbc/mysql-connector-java-5.1.6-bin.jar" sourcepath="D:/usr/workspace/source/mysql-connector-j-release-5.1.zip"/>
 	<classpathentry kind="lib" path="D:/usr/workspace/lib/custom/ftp-client-manager-bin-1.0.1.jar"/>
 	<classpathentry kind="lib" path="D:/usr/workspace/lib/custom/thread-pool-bin-1.2.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hive-JDBC-Driver"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/HDFS-Driver"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ORC-API"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

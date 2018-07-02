@@ -7,15 +7,15 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.liuyang.data.util.PrimitveValue;
 import com.liuyang.data.util.Row;
 import com.liuyang.data.util.Schema;
+import com.liuyang.log.Logger;
 
 public class Meta {
+	//private final static Logger logger = Logger.getLogger(Meta.class);
+	
 	private static final String MYSQL_URI = "jdbc:mysql://master:3306/xdrfile?useUnicode=true&characterEncoding=UTF-8&cachePrepStmts=true";
 	private static final String MYSQL_USER = "lcxdrchecker";
 	private static final String MYSQL_PASS = "lcservis@mysql2017";
@@ -30,13 +30,13 @@ public class Meta {
 	/**
 	 * XDRFILE 更新文件接收信息模版
 	 * @param DATESTAMP
-	 * @param ENDTIME
 	 * @param FILELINES  文件数据条数
+	 * @param ENDTIME 接收结束时间
 	 * @param FILELENGTH 文件接收长度
 	 * @param STATUS 文件状态
 	 * @param FILENAME 文件名称
 	 */
-	private static final String XDRFILE_UPDATE_RECEIVE = "UPDATE xdrfile.file_list_%s SET receiver_end_time = %s, receiver_file_length = %s, receiver_file_status = %s WHERE file_name ='%s'";
+	private static final String XDRFILE_UPDATE_RECEIVE = "UPDATE xdrfile.file_list_%s SET file_lines = %s, receiver_end_time = %s, receiver_file_length = %s, receiver_file_status = %s WHERE file_name ='%s'";
 	/**
 	 * @param DATESTAMP
 	 * @param START_TIME
@@ -102,6 +102,30 @@ public class Meta {
 				}
 			}
 			mysql.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+            mysql = null;
+		}
+		return retval;
+	}
+	
+	public static int updateXDRFile(String datestamp, String fileName, String lines, String endTime, String length, String status) {
+		MySQLManager mysql = null;
+		int retval = 0;
+		try {
+			mysql = getMySQLConnection();
+			if (mysql.isContected()) {
+				retval = mysql.update(String.format(XDRFILE_UPDATE_RECEIVE
+						,datestamp
+						,lines
+						,endTime
+						,length
+						,status
+						,fileName
+					));
+				mysql.close();
+			}			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {

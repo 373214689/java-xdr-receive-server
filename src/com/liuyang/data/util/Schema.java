@@ -1,13 +1,14 @@
 package com.liuyang.data.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
 
 /**
  * Schema
@@ -17,9 +18,11 @@ import java.util.function.Predicate;
  * @version 1.0.2
  *
  */
-public final class Schema {
-	
-    private final static String nil(String value, String defaultValue) {
+public final class Schema implements Serializable {
+	/** */
+	private static final long serialVersionUID = 1052900897518285173L;
+
+	private final static String nil(String value, String defaultValue) {
     	if (value == null) return defaultValue;
     	if (value.length() == 0) return defaultValue;
     	return value;
@@ -493,8 +496,10 @@ public final class Schema {
     	if (fieldName == null) return this;
     	if (type != Type.STRUCT) return fieldName.equals(name) ? this : null;
 		for(Schema value : children) {
+			//System.out.println(value + " >> " + fieldName);
 			if (fieldName.equals(value.name)) return value;
 		}
+		
     	return null;
     }
     
